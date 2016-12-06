@@ -1,0 +1,105 @@
+---
+
+#
+# Common tasks
+#
+
+
+- name: "Set fact: type of environment"
+  set_fact:
+    is_dev: "{{ dative_old_src_environment_type == 'development' }}"
+    is_prod: "{{ dative_old_src_environment_type == 'production' }}"
+  tags: "always" # inocuous to use always here
+
+- name: "Set fact: environment vars"
+  set_fact:
+    old_src_environment:
+      BEAKER_SECRET: "{{ old_src_env_beaker_secret }}"
+      PYR_CONFIG_FILE: "{{ old_src_env_pyramid_config_file }}"
+      EMAIL_HOST: "{{ old_src_env_email_host }}"
+      EMAIL_HOST_PASSWORD: "{{ old_src_env_email_host_password }}"
+      EMAIL_HOST_USER: "{{ old_src_env_email_host_user }}"
+      EMAIL_PORT: "{{ old_src_env_email_port }}"
+      DB_HOST: "{{ old_src_env_db_host }}"
+      DB_NAME: "{{ old_src_env_db_name }}"
+      DB_PASSWORD: "{{ old_src_env_db_password }}"
+      DB_USER: "{{ old_src_env_db_user }}"
+  tags: "always" # inocuous to use always here
+
+- include: "tear-up.yml"
+  tags: # do not use "always" tag in role, to avoid issues when including other roles in a playbook
+  - "oldsrc"
+
+
+#
+# online-linguistic-database
+#
+
+- include: "old-main.yml"
+  tags:
+   - "oldsrc"
+  when: "old_src_install|bool"
+
+- include: "old-db.yml"
+  tags:
+   - "oldsrc"
+   - "oldsrc-db"
+  when: "old_src_install|bool"
+
+- include: "websrv-uwsgi.yml"
+  tags:
+   - "oldsrc"
+  when: "old_src_install|bool and not(old_src_gunicorn|bool)"
+
+- include: "websrv-gunicorn.yml"
+  tags:
+   - "oldsrc"
+  when: "old_src_install|bool and old_src_gunicorn|bool"
+
+
+#
+# OLD install
+#
+#   1. OS dependencies (foma, MITLM, ffmpeg --- debian packages & source)
+#   2. python dependencies (pip packages)
+#   3. OS configuration (user/directory/file creation/permissions/ownership)
+#   4. Code install
+#   5. Database config
+#   6. web server config
+
+- include: "old-deps.yml"
+  tags:
+    - "oldsrc"
+    - "oldsrc-deps"
+  when: "old_src_install|bool"
+
+- include: "old-osconf.yml"
+  tags:
+    - "oldsrc"
+    - "oldsrc-osconf"
+  when: "old_src_install|bool"
+
+- include: "instcode.yml"
+  tags:
+    - "oldsrc"
+    - "oldsrc-instcode"
+  when: "old_src_install|bool"
+
+- include: "dbconf.yml"
+  tags:
+    - "oldsrc"
+    - "oldsrc-dbconf"
+  when: "old_src_install|bool"
+
+- include: "websrv-modwsgi.yml"
+  tags:
+   - "oldsrc"
+   - "oldsrc-websrv"
+  when: "old_src_install|bool and not(old_src_gunicorn|bool)"
+
+- include: "websrv-gunicorn.yml"
+  tags:
+   - "oldsrc"
+   - "oldsrc-websrv"
+  when: "old_src_install|bool and old_src_gunicorn|bool"
+

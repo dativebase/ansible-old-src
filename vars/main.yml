@@ -1,0 +1,14 @@
+---
+# vars file for ansible-role-old-src
+
+old_src_pkgdeps:
+  - "python"
+  - "python-pip"
+  - "libmysqlclient-dev"
+  - "apache2-mpm-prefork"
+  - "libapache2-mod-wsgi"
+  - "ffmpeg"
+  - "imagemagick"
+  - "rsync"
+  - "tesseract-ocr"
+  - "tree"

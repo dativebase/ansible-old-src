@@ -1,0 +1,81 @@
+###########################################################
+#   6- web server config - when using gunicorn with nginx
+###########################################################
+
+- name: "set nginx sites-available config file"
+  template:
+    src: "etc_nginx_sites-gunicorn.conf.j2"
+    dest: "/etc/nginx/sites-available/old.conf"
+    backup: "yes"
+  tags: "oldsrc-websrv"
+
+- name: "Template gunicorn configuration file"
+  template:
+    src: "etc_old.gunicorn-config.py.j2"
+    dest: "/etc/old/old.gunicorn-config.py"
+    backup: "yes"
+  tags: "oldsrc-websrv"
+
+- name: "set gunicorn init file"
+  template:
+    src: "etc_init_old.conf.j2"
+    dest: "/etc/init/old.conf"
+    backup: "yes"
+  tags: "oldsrc-websrv"
+
+- name: "Reload Upstart configuration"
+  command: "initctl reload-configuration"
+  tags: "oldsrc-websrv"
+
+- name: "Remove Nginx default server"
+  file:
+    path: "{{ item }}"
+    state: "absent"
+  with_items:
+    - "/etc/nginx/sites-available/default"
+    - "/etc/nginx/sites-available/default.conf"
+    - "/etc/nginx/sites-enabled/default"
+    - "/etc/nginx/sites-enabled/default.conf"
+  tags: "oldsrc-websrv"
+
+- name: "Set up Nginx server"
+  file:
+    src: "/etc/nginx/sites-available/old.conf"
+    dest: "/etc/nginx/sites-enabled/old.conf"
+    state: "link"
+  tags: "oldsrc-websrv"
+
+# SSL configuration tasks - begin
+- name: "Template nginx sites-available ssl config file"
+  template:
+    src: "etc_nginx_sites-ssl-gunicorn.conf.j2"
+    dest: "/etc/nginx/sites-available/old-ssl.conf"
+    backup: "yes"
+  when: "old_src_ssl|bool"
+  tags: "oldsrc-websrv"
+
+- name: "Remove non-ssl config from sites-enabled"
+  file:
+    path: "/etc/nginx/sites-enabled/old.conf"
+    state: "absent"
+  when: "old_src_ssl|bool"
+  tags: "oldsrc-websrv"
+
+- name: "Add ssl config to sites-enabled"
+  file:
+    src: "/etc/nginx/sites-available/old-ssl.conf"
+    dest: "/etc/nginx/sites-enabled/old-ssl.conf"
+    state: "link"
+  when: "old_src_ssl|bool"
+  tags: "oldsrc-websrv"
+# SSL configuration tasks - end
+
+- name: "Enable services"
+  service:
+    name: "{{ item }}"
+    state: "restarted"
+    enabled: "yes"
+  with_items:
+    - "old-service"
+    - "nginx"
+  tags: "oldsrc-websrv"

@@ -1,0 +1,41 @@
+---
+
+- name: "Run the equivalent of apt-get update"
+  apt:
+    update_cache: "yes"
+
+- name: "Install necessary packages"
+  apt:
+    pkg: "{{ item }}"
+    state: "latest"
+  with_items:
+    - "python-pycurl"
+    - "git"
+
+- name: "Create user old"
+  user:
+    name: "old"
+    uid: "333"
+    system: "yes"
+    groups: "audio"
+    home: "/var/lib/old"
+
+- name: "Add old user permissions in visudo file"
+  lineinfile:
+    dest: "/etc/sudoers"
+    state: "present"
+    regexp: "^old ALL\\="
+    line: "old ALL=NOPASSWD:/bin/mv,/bin/chown,/bin/chmod,/usr/bin/find,/usr/bin/gs,/usr/bin/inkscape"
+    validate: "/usr/sbin/visudo -cf %s"
+
+- name: "Expand old_src_dir"
+  set_fact:
+    old_src_dir: "{{ old_src_dir|expanduser }}"
+
+- name: "Create old_src_dir"
+  file:
+    state: "directory"
+    path: "{{ old_src_dir }}"
+
+# TODO: OLD sample data repo? Maybe a good idea...
+# - name: "Checkout out old-sampledata repository"

@@ -1,0 +1,194 @@
+---
+
+# Online Linguistic Database installer
+
+# This file is divided into the following blocks:
+#   0. Clone source repo
+#   1. OS dependencies (debian packages)
+#   2. python dependencies (pip packages)
+#   3. OS configuration (user/directory/file creation/permissions/ownership )
+#   4. OLD code install
+#   5. Database config
+#   6. web server config
+
+###########################################################
+#   0. Clone source repo
+###########################################################
+
+- name: "Checkout Online Linguistic Database code"
+  git:
+    repo: "{{ old_src_repo }}"
+    dest: "{{ old_src_dir }}/online-linguistic-database"
+    version: "{{ old_src_version }}"
+    force: "yes"
+    accept_hostkey: "yes"
+  tags: "oldsrc-clone"
+
+# For some reason, some dirs in the cloned source code
+# are not sometimes readable by all. Add a task to fix it
+# For some other reason this task does not always work
+# blame ansible  :-/
+# Update: this problem may have been fixed with postinst removal
+- name: "Ensure the source code is readable by all"
+  file:
+    path: "{{ old_src_dir }}/online-linguistic-database"
+    mode: "o+rX"
+    recurse: "yes"
+  become: "yes"
+  tags: "oldsrc-clone"
+
+- name: "Get online-linguistic-database latest commit hash"
+  command: "git rev-parse HEAD"
+  args:
+    chdir: "{{ old_src_dir }}/online-linguistic-database"
+  register: "latest_commit_old"
+  tags: "oldsrc-clone"
+
+- name: "Save Online Linguistic Database latest commit hash"
+  shell: "echo {{ latest_commit_old.stdout }} > {{ old_src_dir }}/online-linguistic-database-commit.txt"
+  tags: "oldsrc-clone"
+# TODO: Make use of latest_commit_old
+
+
+###########################################################
+#   1. OS dependencies (debian packages)
+###########################################################
+
+- name: "Install online-linguistic-database package dependencies (ref. debian/control)"
+  apt:
+    pkg: "{{ item }}"
+    state: "latest"
+  with_items:
+    - "nginx"
+    - "rsync"
+    - "uwsgi"
+    - "uwsgi-plugin-python"
+    #- "FFmpeg" # TODO
+    #- "Tgrep2" # TODO
+    #- "MITLM" # TODO
+    #- "foma" # TODO
+    #- "libmagic" # TODO
+    #- "NLTK" # TODO (pip?)
+    #- "PIL" # TODO (pip?)
+  tags: "oldsrc-osdep"
+
+- name: "Install online-linguistic-database additional package dependencies"
+  apt:
+    pkg: "{{ item }}"
+    state: "latest"
+  with_items:
+    - "python-virtualenv"
+    - "python-dev"
+    - "libssl-dev"
+  tags: "oldsrc-osdep"
+
+
+###########################################################
+#   2. Python dependencies (pip packages)
+###########################################################
+
+- stat:
+    path: "{{ old_src_dir }}/online-linguistic-database/lib"
+  register: "old_lib_dir_check"
+  tags: "oldsrc-pydep"
+
+- set_fact:
+    old_pip_install_extra_args: ""
+  tags: "oldsrc-pydep"
+
+- set_fact:
+    old_pip_install_extra_args: "--find-links lib"
+  when: "old_lib_dir_check.stat.isdir is defined and old_lib_dir_check.stat.isdir"
+  tags: "oldsrc-pydep"
+
+# TODO: add requirements/test.txt and requirements.txt.
+# Cf. https://caremad.io/posts/2013/07/setup-vs-requirement/
+- name: "Create virtualenv for online-linguistic-database, pip install requirements"
+  pip:
+    chdir: "{{ old_src_dir }}/online-linguistic-database"
+    requirements: "{{ 'requirements/test.txt' if is_dev else 'requirements.txt'}}"
+    virtualenv: "/usr/share/python/online-linguistic-database"
+    extra_args: "{{ old_pip_install_extra_args }}"
+    state: "latest"
+  tags: "oldsrc-pydep"
+
+
+###########################################################
+#   3. OS configuration (user/directory/file
+#   creation/permissions/ownership)
+###########################################################
+
+- name: "Create subdirectories for online-linguistic-database source files (ref. debian/online-linguistic-database.install)"
+  file:
+    dest: "{{ item }}"
+    state: "directory"
+  with_items:
+    - "/var/old"
+    - "/usr/lib/old"
+  tags: "oldsrc-osconf"
+
+- name: "Create subdirectories for online-linguistic-database config"
+  file:
+    dest: "{{ item }}"
+    state: "directory"
+  with_items:
+    - "/etc/old"
+  tags: "oldsrc-osconf"
+
+- name: "Set owner, group, mode of /var/old recursively"
+  file:
+    dest: "/var/old"
+    state: "directory"
+    recurse: "yes"
+    owner: "old"
+    group: "old"
+    mode: "u=rwX,g=rwX,o=rX"
+  tags: "oldsrc-osconf"
+
+- name: "Create online-linguistic-database log directories"
+  file:
+    dest: "{{ item }}"
+    state: "directory"
+    owner: "old"
+    group: "old"
+    mode: "g+s"
+  with_items:
+    - "/var/log/old"
+  tags: "oldsrc-osconf"
+
+- name: "Touch OLD log files"
+  file:
+    path: "/var/log/old/{{ item }}"
+    owner: "old"
+    group: "old"
+    state: "touch"
+  with_items:
+    - "old.log"
+    - "old_debug.log"
+  tags: "oldsrc-osconf"
+
+
+###########################################################
+#   4. OLD code install
+###########################################################
+
+# OLD base dir:  /usr/lib/old
+
+- name: "Copy online-linguistic-database source files"
+  file:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    state: "link"
+  with_items:
+    - src: "{{ old_src_dir }}/online-linguistic-database"
+      dest: "/usr/lib/old"
+  tags: "oldsrc-code"
+
+
+###########################################################
+#   5. Database config - moved to separate files
+###########################################################
+
+###########################################################
+#   6. web server config - moved to separate files
+###########################################################

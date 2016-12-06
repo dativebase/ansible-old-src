@@ -1,0 +1,49 @@
+---
+
+###########################################################
+#   5. Database reset (when flag enabled)
+###########################################################
+
+- name: "Drop OLD MySQL database"
+  mysql_db:
+    name: "old"
+    state: "absent"
+  when: "old_src_reset_db|bool or old_src_reset_all|bool"
+
+
+###########################################################
+#   5. Database config
+###########################################################
+
+# Note that when we are using mysql_db and mysql_user we are assuming that the
+# root user has a local ~/.my.cnf configuration file with the credentials in it
+# for the MySQL user.
+
+- name: "Create OLD MySQL database"
+  mysql_db:
+    name: "old"
+    state: "present"
+    encoding: "utf8"
+    collation: "utf8_unicode_ci"
+  register: "createdb_result"
+
+# TODO: need to change the mysql password for user old
+
+- name: "Create MySQL user"
+  mysql_user:
+    name: "old"
+    password: "demo"
+    priv: "old.*:ALL"
+    state: "present"
+
+# TODO: Pyramid equivalent of Djangosyncdb: initialize_old_db ?
+#- name: "Run syncdb"
+#  django_manage:
+#    command: "syncdb"
+#    app_path: "/usr/share/archivematica/dashboard/"
+#    settings: "settings.common"
+#    pythonpath: "/usr/lib/archivematica/archivematicaCommon"
+#  tags: "oldsrc-dbconf-syncdb"
+#  when: "old_src_pre_migration|bool"
+
+# TODO: OLD migrations?
