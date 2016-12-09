@@ -30,15 +30,15 @@
    - "oldsrc-db"
   when: "old_src_install|bool"
 
-- include: "websrv-uwsgi.yml"
-  tags:
-   - "oldsrc"
-  when: "old_src_install|bool and not(old_src_gunicorn|bool)"
+#- include: "websrv-uwsgi.yml"
+#  tags:
+#   - "oldsrc"
+#  when: "old_src_install|bool and not(old_src_gunicorn|bool)"
 
-- include: "websrv-gunicorn.yml"
-  tags:
-   - "oldsrc"
-  when: "old_src_install|bool and old_src_gunicorn|bool"
+#- include: "websrv-gunicorn.yml"
+#  tags:
+#   - "oldsrc"
+#  when: "old_src_install|bool and old_src_gunicorn|bool"
 
 
 #
@@ -51,39 +51,16 @@
 #   5. Database config
 #   6. web server config
 
-- include: "old-deps.yml"
-  tags:
-    - "oldsrc"
-    - "oldsrc-deps"
-  when: "old_src_install|bool"
+# Creates a bunch of directories.
+#- include: "old-osconf.yml"
+#  tags:
+#    - "oldsrc"
+#    - "oldsrc-osconf"
+#  when: "old_src_install|bool"
 
-- include: "old-osconf.yml"
-  tags:
-    - "oldsrc"
-    - "oldsrc-osconf"
-  when: "old_src_install|bool"
-
-- include: "instcode.yml"
-  tags:
-    - "oldsrc"
-    - "oldsrc-instcode"
-  when: "old_src_install|bool"
-
-- include: "dbconf.yml"
-  tags:
-    - "oldsrc"
-    - "oldsrc-dbconf"
-  when: "old_src_install|bool"
-
-- include: "websrv-modwsgi.yml"
-  tags:
-   - "oldsrc"
-   - "oldsrc-websrv"
-  when: "old_src_install|bool and not(old_src_gunicorn|bool)"
-
-- include: "websrv-gunicorn.yml"
-  tags:
-   - "oldsrc"
-   - "oldsrc-websrv"
-  when: "old_src_install|bool and old_src_gunicorn|bool"
+#- include: "instcode.yml"
+#  tags:
+#    - "oldsrc"
+#    - "oldsrc-instcode"
+#  when: "old_src_install|bool"
 
