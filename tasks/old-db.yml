@@ -6,7 +6,7 @@
 
 - name: "Drop OLD MySQL database"
   mysql_db:
-    name: "old"
+    name: "{{ old_src_db_name }}"
     state: "absent"
   when: "old_src_reset_db|bool or old_src_reset_all|bool"
 
@@ -21,7 +21,7 @@
 
 - name: "Create OLD MySQL database"
   mysql_db:
-    name: "old"
+    name: "{{ old_src_db_name }}"
     state: "present"
     encoding: "utf8"
     collation: "utf8_unicode_ci"
@@ -31,19 +31,13 @@
 
 - name: "Create MySQL user"
   mysql_user:
-    name: "old"
-    password: "demo"
-    priv: "old.*:ALL"
+    name: "{{ old_src_db_user }}"
+    password: "{{ old_src_db_password }}"
+    priv: "{{ old_src_db_name }}.*:ALL"
     state: "present"
 
-# TODO: Pyramid equivalent of Djangosyncdb: initialize_old_db ?
-#- name: "Run syncdb"
-#  django_manage:
-#    command: "syncdb"
-#    app_path: "/usr/share/archivematica/dashboard/"
-#    settings: "settings.common"
-#    pythonpath: "/usr/lib/archivematica/archivematicaCommon"
-#  tags: "oldsrc-dbconf-syncdb"
-#  when: "old_src_pre_migration|bool"
+- name: "Create OLD database tables"
+  shell: "/usr/share/python/old/bin/initialize_old_db development.ini"
+    chdir: "{{ old_src_dir }}/old"
 
 # TODO: OLD migrations?

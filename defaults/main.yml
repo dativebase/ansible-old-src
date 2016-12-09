@@ -1,0 +1,77 @@
+---
+# default values for role variables
+# playbook will use these defaults if not overriden in the playbook
+# (or host_vars, group_vars, etc)
+
+
+# directory to install OLD source code
+old_src_dir: "/opt/old"
+
+# Components to install
+old_src_install: "yes"
+
+# TODO: Do these 3rd-party components need Ansible vars?
+old_src_install_foma: "yes"
+old_src_install_mitlm: "yes"
+old_src_install_ffmpeg: "yes"
+
+# Define the type of environment: "production" or "development". The latter
+# will deploy some extra stuff to make the development workflow easier.
+old_src_environment_type: "production"
+
+# Repositories
+old_src_repo: "https://github.com/jrwdunham/old-pyramid"
+# The following one is the Pylons app (soon to be deprecated)
+# old_src_repo: "https://github.com/jrwdunham/old"
+
+# Branches
+old_src_version: "master"
+
+old_src_beaker_secret: "CHANGE_ME_WITH_A_SECRET_KEY"
+old_src_pyramid_config_file: "production.ini"
+old_src_email_host: "localhost"
+old_src_email_host_password: ""
+old_src_email_host_user: ""
+old_src_email_port: "25"
+old_src_db_host: ""
+old_src_db_user: "old"
+old_src_db_password: "demo"
+# This should to be changed for each install ...
+# Really, this ansible script should allow for multiple OLD instances to be
+# deployed, obviating the need for Senex.
+old_src_db_name: "old"
+
+# Reset the OLD MySQL database
+old_src_reset_db: "false"
+# Clear the existing store/ directory
+old_src_reset_store: "false"
+# reset the OLD database and the store/ directory; overrides the vars above, if
+# true.
+old_src_reset_all: "false"
+
+
+## Migrations related TODO?
+
+# dependencies (see old_src_pkgdeps in vars/main.yml)
+
+# Use gunicorn instead of uwsgi
+old_src_gunicorn: "false"
+## nginx gunicorn parameters
+### in both nginx and gunicorn config files
+old_src_bind: "127.0.0.1:8001"
+## in nginx config file
+old_src_nginx_proxy_read_timeout: "172800s"
+### in gunicorn config file
+old_src_gunicorn_workers: "4"
+old_src_gunicorn_timeout: "172800"
+old_src_gunicorn_sendfile: "True"
+
+## SSL configuration (for nginx/gunicorn configuration only)
+# enable SSL
+old_src_ssl: "false"
+# include acmetool challenge location in dashboard nginx configuration
+# (ref.  https://github.com/artefactual-labs/ansible-acmetool )
+old_src_ssl_include_acme_chlg_loc: "false"
+# the following vars need to be defined in the playbook or host_vars
+#   old_src_ssl_fullchain: "/var/lib/acme/live/mysite.org/fullchain"
+#   old_src_ssl_privkey: "/var/lib/acme/live/mysite.org/privkey"

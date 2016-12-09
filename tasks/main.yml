@@ -4,26 +4,10 @@
 # Common tasks
 #
 
-
 - name: "Set fact: type of environment"
   set_fact:
-    is_dev: "{{ dative_old_src_environment_type == 'development' }}"
-    is_prod: "{{ dative_old_src_environment_type == 'production' }}"
-  tags: "always" # inocuous to use always here
-
-- name: "Set fact: environment vars"
-  set_fact:
-    old_src_environment:
-      BEAKER_SECRET: "{{ old_src_env_beaker_secret }}"
-      PYR_CONFIG_FILE: "{{ old_src_env_pyramid_config_file }}"
-      EMAIL_HOST: "{{ old_src_env_email_host }}"
-      EMAIL_HOST_PASSWORD: "{{ old_src_env_email_host_password }}"
-      EMAIL_HOST_USER: "{{ old_src_env_email_host_user }}"
-      EMAIL_PORT: "{{ old_src_env_email_port }}"
-      DB_HOST: "{{ old_src_env_db_host }}"
-      DB_NAME: "{{ old_src_env_db_name }}"
-      DB_PASSWORD: "{{ old_src_env_db_password }}"
-      DB_USER: "{{ old_src_env_db_user }}"
+    is_dev: "{{ old_src_environment_type == 'development' }}"
+    is_prod: "{{ old_src_environment_type == 'production' }}"
   tags: "always" # inocuous to use always here
 
 - include: "tear-up.yml"
@@ -32,7 +16,7 @@
 
 
 #
-# online-linguistic-database
+# Online Linguistic Database
 #
 
 - include: "old-main.yml"
