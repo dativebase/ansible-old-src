@@ -60,6 +60,7 @@
     - "deb http://archive.ubuntu.com/ubuntu/ {{ ansible_distribution_release }} multiverse"
     - "deb http://archive.ubuntu.com/ubuntu/ {{ ansible_distribution_release }}-security universe"
     - "deb http://archive.ubuntu.com/ubuntu/ {{ ansible_distribution_release }}-updates multiverse"
+    - "ppa:mc3man/trusty-media"
 
 - name: "Install OLD package dependencies"
   apt:
@@ -75,33 +76,37 @@
 - file:
     path: "/home/vagrant/downloads/"
     state: "directory"
-    mode: 0755
-  tags: "oldsrc-osdep"
+    mode: "0755"
+    owner: "vagrant"
+    group: "vagrant"
+  tags: "oldsrc-osdep,foma"
 
 - name: "Download foma"
   get_url:
     url: "https://bitbucket.org/mhulden/foma/downloads/foma-0.9.18.tar.gz"
-    dest: "/home/vagrant/downloads/foma-0.9.18.tar.gz"
-  tags: "oldsrc-osdep"
+    dest: "/home/vagrant/downloads"
+    owner: "vagrant"
+    group: "vagrant"
+  tags: "oldsrc-osdep,foma"
 
 - name: "Extract foma"
   unarchive:
     src: "/home/vagrant/downloads/foma-0.9.18.tar.gz"
-    dest: "/home/vagrant/downloads/foma-0.9.18"
-    remote_src: "yes"
-  tags: "oldsrc-osdep"
+    dest: "/home/vagrant/downloads"
+    copy: "no"
+  tags: "oldsrc-osdep,foma"
 
 - name: "Run `make` in foma"
   make:
     chdir: "/home/vagrant/downloads/foma-0.9.18"
-  tags: "oldsrc-osdep"
+  tags: "oldsrc-osdep,foma"
 
 - name: "Run `sudo make install` in foma"
   make:
     chdir: "/home/vagrant/downloads/foma-0.9.18"
     target: "install"
   become: yes
-  tags: "oldsrc-osdep"
+  tags: "oldsrc-osdep,foma"
 
 
 # TGrep2 --- Searching treebanks
@@ -128,57 +133,68 @@
   get_url:
     url: "http://tedlab.mit.edu/~dr/DRUtils/drutils.tgz"
     dest: "/home/vagrant/downloads/drutils.tgz"
-  tags: "oldsrc-osdep"
+    owner: "vagrant"
+    group: "vagrant"
+  tags: "oldsrc-osdep,tgrep2"
 
 - name: "Extract DRUtils"
   unarchive:
     src: "/home/vagrant/downloads/drutils.tgz"
-    dest: "/home/vagrant/downloads/DRUtils"
-    remote_src: "yes"
-  tags: "oldsrc-osdep"
+    dest: "/home/vagrant/downloads"
+    copy: "no"
+    owner: "vagrant"
+    group: "vagrant"
+  tags: "oldsrc-osdep,tgrep2"
 
 - name: "Make DRUtils 64-bit compilable"
   lineinfile:
-  dest: "/home/vagrant/downloads/DRUtils/Makefile"
-  regexp: "^CC = gcc -Wall -O4 -march=i486$"
-  line: "CC = gcc -Wall -O4"
+    dest: "/home/vagrant/downloads/DRUtils/Makefile"
+    regexp: "^CC = gcc -Wall -O4 -march=i486$"
+    line: "CC = gcc -Wall -O4"
+  tags: "oldsrc-osdep,tgrep2"
 
 - name: "Run `make` in DRUtils"
   make:
     chdir: "/home/vagrant/downloads/DRUtils"
   become: "yes"
-  tags: "oldsrc-osdep"
+  tags: "oldsrc-osdep,tgrep2"
 
 - name: "Download TGrep2"
   get_url:
     url: "http://tedlab.mit.edu/~dr/Tgrep2/tgrep2.tgz"
     dest: "/home/vagrant/downloads/tgrep2.tgz"
-  tags: "oldsrc-osdep"
+    owner: "vagrant"
+    group: "vagrant"
+  tags: "oldsrc-osdep,tgrep2"
 
 - name: "Extract TGrep2"
   unarchive:
     src: "/home/vagrant/downloads/tgrep2.tgz"
-    dest: "/home/vagrant/downloads/TGrep2"
-    remote_src: "yes"
-  tags: "oldsrc-osdep"
+    dest: "/home/vagrant/downloads"
+    copy: "no"
+    owner: "vagrant"
+    group: "vagrant"
+  tags: "oldsrc-osdep,tgrep2"
 
 - name: "Point TGrep2 to DRUtils"
   lineinfile:
-  dest: "/home/vagrant/downloads/TGrep2/Makefile"
-  regexp: "^UTIL_DIR= ${HOME}/DRUtils"
-  line: "UTIL_DIR= ${HOME}/downloads/DRUtils"
+    dest: "/home/vagrant/downloads/TGrep2/Makefile"
+    regexp: "^UTIL_DIR= ${HOME}/DRUtils"
+    line: "UTIL_DIR= ${HOME}/downloads/DRUtils"
+  tags: "oldsrc-osdep,tgrep2"
 
 - name: "Run `make` in TGrep2"
   make:
     chdir: "/home/vagrant/downloads/TGrep2"
-  tags: "oldsrc-osdep"
+  become: "no"
+  tags: "oldsrc-osdep,tgrep2"
 
 - name: "Put tgrep2 in path"
   file:
     src: "/home/vagrant/downloads/TGrep2/tgrep2"
     dest: "/usr/local/bin/tgrep2"
     state: "link"
-  tags: "oldsrc-osdep"
+  tags: "oldsrc-osdep,tgrep2"
 
 
 # MITLM --- For estimating language models
@@ -203,63 +219,185 @@
     version: "master"
     force: "yes"
     accept_hostkey: "yes"
-  tags: "oldsrc-osdep"
+  become_user: "vagrant"
+  tags: "oldsrc-osdep,mitlm"
 
 - name: "Create MITLM configure script"
-  shell: "autogen.sh"
+  shell: "./autogen.sh"
   args:
-    chdir: "/home/vagrant/downloads/mitlm"
-  tags: "oldsrc-osdep"
+    chdir: "/home/vagrant/downloads/mitlm/"
+  tags: "oldsrc-osdep,mitlm"
 
 - name: "Configure MITLM"
-  shell: "configure"
+  shell: "./configure"
   args:
-    chdir: "/home/vagrant/downloads/mitlm"
-  tags: "oldsrc-osdep"
+    chdir: "/home/vagrant/downloads/mitlm/"
+  tags: "oldsrc-osdep,mitlm"
 
 - name: "Run `make` in MITLM"
   make:
     chdir: "/home/vagrant/downloads/mitlm"
-  tags: "oldsrc-osdep"
+  tags: "oldsrc-osdep,mitlm"
 
 - name: "Run `sudo make install` in MITLM"
   make:
     chdir: "/home/vagrant/downloads/mitlm"
     target: "install"
   become: "yes"
-  tags: "oldsrc-osdep"
+  tags: "oldsrc-osdep,mitlm"
+
+- name: "Make vagrant own mitlm/"
+  file:
+    path: "/home/vagrant/downloads/mitlm"
+    owner: "vagrant"
+    group: "vagrant"
+    recurse: "yes"
+  become: "yes"
+  tags: "oldsrc-osdep,mitlm"
+
+- name: "Remove bad estimate-ngram"
+  file:
+    path: "/usr/local/bin/estimate-ngram"
+    state: "absent"
+  tags: "oldsrc-osdep,mitlm"
+
+- name: "Put estimate-ngram in PATH"
+  file:
+    src: "/home/vagrant/downloads/mitlm/estimate-ngram"
+    dest: "/usr/local/bin/estimate-ngram"
+    state: "link"
+  tags: "oldsrc-osdep,mitlm"
 
 
 ###########################################################
 #   2. Python dependencies (pip packages)
 ###########################################################
 
-- stat:
-    path: "{{ old_src_dir }}/old/lib"
-  register: "old_lib_dir_check"
-  tags: "oldsrc-pydep"
-
-- set_fact:
-    old_pip_install_extra_args: ""
-  tags: "oldsrc-pydep"
-
-- set_fact:
-    old_pip_install_extra_args: "--find-links lib"
-  when: "old_lib_dir_check.stat.isdir is defined and old_lib_dir_check.stat.isdir"
-  tags: "oldsrc-pydep"
-
-# TODO: add requirements/test.txt and requirements.txt.
-# Cf. https://caremad.io/posts/2013/07/setup-vs-requirement/
 - name: "Create virtualenv for OLD, pip install requirements"
   pip:
     chdir: "{{ old_src_dir }}/old"
     requirements: "{{ 'requirements/test.txt' if is_dev else 'requirements.txt'}}"
     virtualenv: "/usr/share/python/old"
     virtualenv_python: "python3.4"
-    extra_args: "{{ old_pip_install_extra_args }}"
+    extra_args: "-e \".[testing]\""
     state: "latest"
   tags: "oldsrc-pydep"
 
+
+- name: "Create virtualenv for OLD, pip install requirements"
+  pip:
+    chdir: "{{ old_src_dir }}/old"
+    requirements: "{{ 'requirements/test.txt' if is_dev else 'requirements.txt'}}"
+    virtualenv: "/usr/share/python/old"
+    virtualenv_python: "python3.4"
+    extra_args: "-e \".[testing]\""
+    state: "latest"
+  tags: "oldsrc-pydep"
+
+
+###########################################################
+#   3. OLD Instances
+###########################################################
+
+- name: "Create the OLD APPs directory (~/oldapps/)"
+  file:
+    path: "{{ old_apps_dir }}"
+    state: "directory"
+    mode: "0755"
+    owner: "vagrant"
+    group: "vagrant"
+  tags: "oldinsts"
+
+# OLD Instance Directories
+###########################################################
+
+- name: "Create OLD instance directory/ies"
+  file:
+    path: "{{ old_apps_dir }}/{{ item.old_inst_name }}"
+    state: "directory"
+    mode: "0755"
+    owner: "vagrant"
+    group: "vagrant"
+  with_items: "{{ old_instances }}"
+  tags: "oldinsts"
+
+- name: "Create OLD instance Pyramid config file(s)"
+  template:
+    src: "old-config-tmpl.ini.j2"
+    dest: "{{ old_apps_dir }}/{{ item.old_inst_name }}/production.ini"
+    mode: "0755"
+    owner: "vagrant"
+    group: "vagrant"
+  with_items: "{{ old_instances }}"
+  tags: "oldinsts"
+
+- file:
+    path: "{{ old_apps_dir }}/{{ item.old_inst_name }}/old"
+    state: "directory"
+    mode: "0755"
+    owner: "vagrant"
+    group: "vagrant"
+  with_items: "{{ old_instances }}"
+  tags: "oldinsts"
+
+- file:
+    path: "{{ old_apps_dir }}/{{ item.old_inst_name }}/old/static"
+    state: "directory"
+    mode: "0755"
+    owner: "vagrant"
+    group: "vagrant"
+  with_items: "{{ old_instances }}"
+  tags: "oldinsts"
+
+- name: "Copy ISO languages data"
+  command: "cp -r {{ old_src_dir }}/old/old/static/iso_639_3_languages_data {{ old_apps_dir }}/{{ item.old_inst_name }}/old/static/"
+  with_items: "{{ old_instances }}"
+  tags: "oldinsts"
+
+
+# OLD Instance Directories
+###########################################################
+#
+# Note: should be able to replace this with:
+# - include old-inst-db.yml
+#   with_items: "{{ old_instances }}"
+
+- name: "Drop OLD instance MySQL database(s)"
+  mysql_db:
+    name: "{{ item.old_inst_name }}"
+    state: "absent"
+  when: "old_inst_reset_dbs|bool or old_inst_reset_all|bool or item.reset_db|bool"
+  with_items: "{{ old_instances }}"
+  tags: "oldinsts"
+
+- name: "Create OLD instance MySQL database(s)"
+  mysql_db:
+    name: "{{ item.old_inst_name }}"
+    state: "present"
+    encoding: "utf8"
+    collation: "utf8_unicode_ci"
+  with_items: "{{ old_instances }}"
+  tags: "oldinsts"
+
+- name: "Create MySQL user with permissions on OLD instance db(s)"
+  mysql_user:
+    name: "{{ old_src_db_user }}"
+    password: "{{ old_src_db_password }}"
+    priv: "{{ item.old_inst_name }}.*:ALL"
+    state: "present"
+  with_items: "{{ old_instances }}"
+  tags: "oldinsts"
+
+- name: "Create OLD instance database tables (using Pyramid script & config)"
+  shell: "/usr/share/python/old/bin/initialize_old_db production.ini"
+  args:
+    chdir: "{{ old_apps_dir }}/{{ item.old_inst_name }}"
+  with_items: "{{ old_instances }}"
+  tags: "oldinsts"
+
+
+# item.old_inst_name: "testold"
+# item.old_inst_port: "5000"
 
 ###########################################################
 #   3. OS configuration (user/directory/file
@@ -314,29 +452,3 @@
     - "old.log"
     - "old_debug.log"
   tags: "oldsrc-osconf"
-
-
-###########################################################
-#   4. OLD code install
-###########################################################
-
-# OLD base dir:  /usr/lib/old
-
-- name: "Copy OLD source files"
-  file:
-    src: "{{ item.src }}"
-    dest: "{{ item.dest }}"
-    state: "link"
-  with_items:
-    - src: "{{ old_src_dir }}/old"
-      dest: "/usr/lib/old"
-  tags: "oldsrc-code"
-
-
-###########################################################
-#   5. Database config - moved to separate files
-###########################################################
-
-###########################################################
-#   6. web server config - moved to separate files
-###########################################################

@@ -17,7 +17,7 @@ old_src_install_ffmpeg: "yes"
 
 # Define the type of environment: "production" or "development". The latter
 # will deploy some extra stuff to make the development workflow easier.
-old_src_environment_type: "production"
+old_src_environment_type: "development"
 
 # Repositories
 old_src_repo: "https://github.com/jrwdunham/old-pyramid"
@@ -41,13 +41,13 @@ old_src_db_password: "demo"
 # deployed, obviating the need for Senex.
 old_src_db_name: "old"
 
-# Reset the OLD MySQL database
-old_src_reset_db: "false"
-# Clear the existing store/ directory
-old_src_reset_store: "false"
-# reset the OLD database and the store/ directory; overrides the vars above, if
-# true.
-old_src_reset_all: "false"
+# Reset all the OLD instances' MySQL databases
+old_inst_reset_dbs: "false"
+# Clear the store/ directories of all OLD instances
+old_inst_reset_store: "false"
+# reset the database and the store/ directories of all OLD instances; overrides
+# the vars above, if true.
+old_inst_reset_all: "false"
 
 
 ## Migrations related TODO?
@@ -75,3 +75,12 @@ old_src_ssl_include_acme_chlg_loc: "false"
 # the following vars need to be defined in the playbook or host_vars
 #   old_src_ssl_fullchain: "/var/lib/acme/live/mysite.org/fullchain"
 #   old_src_ssl_privkey: "/var/lib/acme/live/mysite.org/privkey"
+
+
+old_apps_dir: "/home/vagrant/oldapps"
+
+old_instances:
+  - old_inst_name: "testold"
+    old_inst_port: "5000"
+    reset_db: "no"
+

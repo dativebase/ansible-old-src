@@ -38,6 +38,7 @@
 
 - name: "Create OLD database tables"
   shell: "/usr/share/python/old/bin/initialize_old_db development.ini"
+  args:
     chdir: "{{ old_src_dir }}/old"
 
 # TODO: OLD migrations?

@@ -24,11 +24,13 @@
    - "oldsrc"
   when: "old_src_install|bool"
 
-- include: "old-db.yml"
-  tags:
-   - "oldsrc"
-   - "oldsrc-db"
-  when: "old_src_install|bool"
+# DB manipulation is done multiple times, depending on how many OLD instances
+# the user wants.
+#- include: "old-db.yml"
+#  tags:
+#   - "oldsrc"
+#   - "oldsrc-db"
+#  when: "old_src_install|bool"
 
 #- include: "websrv-uwsgi.yml"
 #  tags:
