@@ -383,6 +383,7 @@
   mysql_user:
     name: "{{ old_src_db_user }}"
     password: "{{ old_src_db_password }}"
+    append_privs: "yes"
     priv: "{{ item.old_inst_name }}.*:ALL"
     state: "present"
   with_items: "{{ old_instances }}"
@@ -394,6 +395,34 @@
     chdir: "{{ old_apps_dir }}/{{ item.old_inst_name }}"
   with_items: "{{ old_instances }}"
   tags: "oldinsts"
+
+- name: "Create Supervisord config files for the OLD instance(s)"
+  template:
+    src: "supervisord.conf.j2"
+    dest: "/etc/supervisor/conf.d/{{ item.old_inst_name }}.conf"
+  with_items: "{{ old_instances }}"
+  tags: "oldinsts"
+
+- name: "Serve the OLD instance(s) with Supervisorctl"
+  supervisorctl:
+    name: "{{ item.old_inst_name }}"
+    state: "present"
+  with_items: "{{ old_instances }}"
+  tags: "oldinsts"
+
+- name: "Serve the OLD instance(s) with Supervisorctl"
+  supervisorctl:
+    name: "{{ item.old_inst_name }}"
+    state: "started"
+  with_items: "{{ old_instances }}"
+  tags: "oldinsts"
+
+#- name: "Serve the OLD instances"
+#  shell: "/usr/share/python/old/bin/pserve --daemon --pid-file=pserve_{{ item.old_inst_port }}.pid production.ini"
+#  args:
+#    chdir: "{{ old_apps_dir }}/{{ item.old_inst_name }}"
+#  with_items: "{{ old_instances }}"
+#  tags: "oldinsts"
 
 
 # item.old_inst_name: "testold"
