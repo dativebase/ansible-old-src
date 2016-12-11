@@ -1,19 +1,28 @@
 ---
-# default values for role variables
-# playbook will use these defaults if not overriden in the playbook
-# (or host_vars, group_vars, etc)
+# Default values for role variables.
+# The playbook will use these defaults if not overriden in the playbook
+# (or host_vars, group_vars, etc.)
 
-
-# directory to install OLD source code
+# Default directory to install OLD source code
 old_src_dir: "/opt/old"
 
-# Components to install
+# Install the OLD source code. How not?
 old_src_install: "yes"
 
-# TODO: Do these 3rd-party components need Ansible vars?
+# Configure whether the OLD's "soft" dependencies should be installed.
+
+# Foma is for FST compilation.
 old_src_install_foma: "yes"
+
+# MITLM is for LM estimation.
 old_src_install_mitlm: "yes"
+
+# TGrep2 is for syntactic tree search.
+old_src_install_tgrep2: "yes"
+
+# FFmpeg is used to create reduced-size audio files.
 old_src_install_ffmpeg: "yes"
+
 
 # Define the type of environment: "production" or "development". The latter
 # will deploy some extra stuff to make the development workflow easier.
@@ -21,8 +30,8 @@ old_src_environment_type: "development"
 
 # Repositories
 old_src_repo: "https://github.com/jrwdunham/old-pyramid"
-# The following one is the Pylons app (soon to be deprecated)
-# old_src_repo: "https://github.com/jrwdunham/old"
+# Warning: this playbook will not work with the version of OLD written using
+# the Pylons framework, i.e., https://github.com/jrwdunham/old
 
 # Branches
 old_src_version: "master"

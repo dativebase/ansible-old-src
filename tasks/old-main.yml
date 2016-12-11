@@ -4,7 +4,9 @@
 
 # This file is divided into the following blocks:
 #   0. Clone source repo
-#   1. OS dependencies (debian packages)
+#   1. OS dependencies 
+#      - debian packages
+#      - from source for more arcane tools (foma, tgrep2, mitlm)
 #   2. python dependencies (pip packages)
 #   3. OS configuration (user/directory/file creation/permissions/ownership )
 #   4. OLD code install
@@ -18,7 +20,7 @@
 - name: "Checkout Online Linguistic Database code"
   git:
     repo: "{{ old_src_repo }}"
-    dest: "{{ old_src_dir }}/old"
+    dest: "{{ old_src_dir }}"
     version: "{{ old_src_version }}"
     force: "yes"
     accept_hostkey: "yes"
@@ -28,7 +30,7 @@
 # are not sometimes readable by all. Add a task to fix it
 - name: "Ensure the source code is readable by all"
   file:
-    path: "{{ old_src_dir }}/old"
+    path: "{{ old_src_dir }}"
     mode: "o+rX"
     recurse: "yes"
   become: "yes"
@@ -37,7 +39,7 @@
 - name: "Get OLD latest commit hash"
   command: "git rev-parse HEAD"
   args:
-    chdir: "{{ old_src_dir }}/old"
+    chdir: "{{ old_src_dir }}"
   register: "latest_commit_old"
   tags: "oldsrc-clone"
 
@@ -51,6 +53,8 @@
 #   1. OS dependencies (debian packages)
 ###########################################################
 
+# Debian packages
+
 - name: "Add multiverse repositories"
   become: "yes"
   apt_repository:
@@ -60,7 +64,12 @@
     - "deb http://archive.ubuntu.com/ubuntu/ {{ ansible_distribution_release }} multiverse"
     - "deb http://archive.ubuntu.com/ubuntu/ {{ ansible_distribution_release }}-security universe"
     - "deb http://archive.ubuntu.com/ubuntu/ {{ ansible_distribution_release }}-updates multiverse"
-    - "ppa:mc3man/trusty-media"
+
+- name: "Add trusty-media repository for ffmpeg"
+  become: "yes"
+  apt_repository:
+    repo: "ppa:mc3man/trusty-media"
+    state: "present"
 
 - name: "Install OLD package dependencies"
   apt:
@@ -69,9 +78,16 @@
   with_items: "{{ old_src_pkgdeps }}"
   tags: "oldsrc-osdep"
 
+# From source
 
 # Install foma & flookup --- for FST compilation
-###########################################################
+
+- name: "Check if foma is installed"
+  shell: "foma -v"
+  register: "foma_version"
+
+- set_fact:
+    foma_installed: "'foma 0.9.18alpha' in foma_version"
 
 - file:
     path: "/home/vagrant/downloads/"
@@ -79,6 +95,7 @@
     mode: "0755"
     owner: "vagrant"
     group: "vagrant"
+  when: "old_src_install_foma|bool and not(foma_installed)"
   tags: "oldsrc-osdep,foma"
 
 - name: "Download foma"
@@ -87,6 +104,7 @@
     dest: "/home/vagrant/downloads"
     owner: "vagrant"
     group: "vagrant"
+  when: "old_src_install_foma|bool and not(foma_installed)"
   tags: "oldsrc-osdep,foma"
 
 - name: "Extract foma"
@@ -94,11 +112,13 @@
     src: "/home/vagrant/downloads/foma-0.9.18.tar.gz"
     dest: "/home/vagrant/downloads"
     copy: "no"
+  when: "old_src_install_foma|bool and not(foma_installed)"
   tags: "oldsrc-osdep,foma"
 
 - name: "Run `make` in foma"
   make:
     chdir: "/home/vagrant/downloads/foma-0.9.18"
+  when: "old_src_install_foma|bool and not(foma_installed)"
   tags: "oldsrc-osdep,foma"
 
 - name: "Run `sudo make install` in foma"
@@ -106,28 +126,19 @@
     chdir: "/home/vagrant/downloads/foma-0.9.18"
     target: "install"
   become: yes
+  when: "old_src_install_foma|bool and not(foma_installed)"
   tags: "oldsrc-osdep,foma"
 
 
 # TGrep2 --- Searching treebanks
-###########################################################
 
-# Manual instructions (to be deleted)
-# cd ~/downloads
-# wget http://tedlab.mit.edu/~dr/DRUtils/drutils.tgz
-# tar xvzf drutils.tgz
-# vim DRUtils/Makefile
-# changed ``CC = gcc -Wall -O4 -march=i486`` to ``CC = gcc -Wall -O4``
-# cd DRUtils
-# sudo make
-# cd ~/downloads
-# wget http://tedlab.mit.edu/~dr/Tgrep2/tgrep2.tgz
-# tar xvzf tgrep2.tgz
-# vim TGrep2/Makefile
-# changed ``UTIL_DIR= ${HOME}/DRUtils`` to ``UTIL_DIR= ${HOME}/downloads/DRUtils``
-# cd TGrep2
-# make
-# sudo ln -s /home/vagrant/downloads/TGrep2/tgrep2 /usr/local/bin/tgrep2
+
+- name: "Check if TGrep2 installed"
+  shell: "tgrep2 -h 2>&1 >/dev/null | grep version"
+  register: "tgrep2_version"
+
+- set_fact:
+    tgrep2_installed: "'TGrep2 version 1.15' in tgrep2_version"
 
 - name: "Download DRUtils"
   get_url:
@@ -135,6 +146,7 @@
     dest: "/home/vagrant/downloads/drutils.tgz"
     owner: "vagrant"
     group: "vagrant"
+  when: "old_src_install_tgrep2|bool and not(tgrep2_installed)"
   tags: "oldsrc-osdep,tgrep2"
 
 - name: "Extract DRUtils"
@@ -144,6 +156,7 @@
     copy: "no"
     owner: "vagrant"
     group: "vagrant"
+  when: "old_src_install_tgrep2|bool and not(tgrep2_installed)"
   tags: "oldsrc-osdep,tgrep2"
 
 - name: "Make DRUtils 64-bit compilable"
@@ -151,12 +164,14 @@
     dest: "/home/vagrant/downloads/DRUtils/Makefile"
     regexp: "^CC = gcc -Wall -O4 -march=i486$"
     line: "CC = gcc -Wall -O4"
+  when: "old_src_install_tgrep2|bool and not(tgrep2_installed)"
   tags: "oldsrc-osdep,tgrep2"
 
 - name: "Run `make` in DRUtils"
   make:
     chdir: "/home/vagrant/downloads/DRUtils"
   become: "yes"
+  when: "old_src_install_tgrep2|bool and not(tgrep2_installed)"
   tags: "oldsrc-osdep,tgrep2"
 
 - name: "Download TGrep2"
@@ -165,6 +180,7 @@
     dest: "/home/vagrant/downloads/tgrep2.tgz"
     owner: "vagrant"
     group: "vagrant"
+  when: "old_src_install_tgrep2|bool and not(tgrep2_installed)"
   tags: "oldsrc-osdep,tgrep2"
 
 - name: "Extract TGrep2"
@@ -174,6 +190,7 @@
     copy: "no"
     owner: "vagrant"
     group: "vagrant"
+  when: "old_src_install_tgrep2|bool and not(tgrep2_installed)"
   tags: "oldsrc-osdep,tgrep2"
 
 - name: "Point TGrep2 to DRUtils"
@@ -181,12 +198,14 @@
     dest: "/home/vagrant/downloads/TGrep2/Makefile"
     regexp: "^UTIL_DIR= ${HOME}/DRUtils"
     line: "UTIL_DIR= ${HOME}/downloads/DRUtils"
+  when: "old_src_install_tgrep2|bool and not(tgrep2_installed)"
   tags: "oldsrc-osdep,tgrep2"
 
 - name: "Run `make` in TGrep2"
   make:
     chdir: "/home/vagrant/downloads/TGrep2"
   become: "no"
+  when: "old_src_install_tgrep2|bool and not(tgrep2_installed)"
   tags: "oldsrc-osdep,tgrep2"
 
 - name: "Put tgrep2 in path"
@@ -194,23 +213,18 @@
     src: "/home/vagrant/downloads/TGrep2/tgrep2"
     dest: "/usr/local/bin/tgrep2"
     state: "link"
+  when: "old_src_install_tgrep2|bool and not(tgrep2_installed)"
   tags: "oldsrc-osdep,tgrep2"
 
 
 # MITLM --- For estimating language models
-###########################################################
 
-# sudo apt -y install autoconf automake libtool gfortran autoconf-archive
-# sudo apt-get install build-essential g++
-# cd ~/downloads
-# git clone https://github.com/mitlm/mitlm.git
-# cd mitlm
-# ./autogen.sh
-# ./configure
-# make
-# sudo make install
-# sudo rm /usr/local/bin/estimate-ngram
-# sudo ln -s /home/vagrant/downloads/mitlm/estimate-ngram /usr/local/bin/estimate-ngram
+- name: "Check if MITLM is installed"
+  shell: "estimate-ngram -h | grep 'MIT Language Modeling Toolkit'"
+  register: "mitlm_version"
+
+- set_fact:
+    mitlm_installed: "'MIT Language Modeling Toolkit 0.4.2' in mitlm_version"
 
 - name: "Checkout MITLM code"
   git:
@@ -220,23 +234,27 @@
     force: "yes"
     accept_hostkey: "yes"
   become_user: "vagrant"
+  when: "old_src_install_mitlm|bool and not (mitlm_installed)"
   tags: "oldsrc-osdep,mitlm"
 
 - name: "Create MITLM configure script"
   shell: "./autogen.sh"
   args:
     chdir: "/home/vagrant/downloads/mitlm/"
+  when: "old_src_install_mitlm|bool and not (mitlm_installed)"
   tags: "oldsrc-osdep,mitlm"
 
 - name: "Configure MITLM"
   shell: "./configure"
   args:
     chdir: "/home/vagrant/downloads/mitlm/"
+  when: "old_src_install_mitlm|bool and not (mitlm_installed)"
   tags: "oldsrc-osdep,mitlm"
 
 - name: "Run `make` in MITLM"
   make:
     chdir: "/home/vagrant/downloads/mitlm"
+  when: "old_src_install_mitlm|bool and not (mitlm_installed)"
   tags: "oldsrc-osdep,mitlm"
 
 - name: "Run `sudo make install` in MITLM"
@@ -244,6 +262,7 @@
     chdir: "/home/vagrant/downloads/mitlm"
     target: "install"
   become: "yes"
+  when: "old_src_install_mitlm|bool and not (mitlm_installed)"
   tags: "oldsrc-osdep,mitlm"
 
 - name: "Make vagrant own mitlm/"
@@ -253,12 +272,14 @@
     group: "vagrant"
     recurse: "yes"
   become: "yes"
+  when: "old_src_install_mitlm|bool and not (mitlm_installed)"
   tags: "oldsrc-osdep,mitlm"
 
 - name: "Remove bad estimate-ngram"
   file:
     path: "/usr/local/bin/estimate-ngram"
     state: "absent"
+  when: "old_src_install_mitlm|bool and not (mitlm_installed)"
   tags: "oldsrc-osdep,mitlm"
 
 - name: "Put estimate-ngram in PATH"
@@ -266,6 +287,7 @@
     src: "/home/vagrant/downloads/mitlm/estimate-ngram"
     dest: "/usr/local/bin/estimate-ngram"
     state: "link"
+  when: "old_src_install_mitlm|bool and not (mitlm_installed)"
   tags: "oldsrc-osdep,mitlm"
 
 
@@ -275,18 +297,7 @@
 
 - name: "Create virtualenv for OLD, pip install requirements"
   pip:
-    chdir: "{{ old_src_dir }}/old"
-    requirements: "{{ 'requirements/test.txt' if is_dev else 'requirements.txt'}}"
-    virtualenv: "/usr/share/python/old"
-    virtualenv_python: "python3.4"
-    extra_args: "-e \".[testing]\""
-    state: "latest"
-  tags: "oldsrc-pydep"
-
-
-- name: "Create virtualenv for OLD, pip install requirements"
-  pip:
-    chdir: "{{ old_src_dir }}/old"
+    chdir: "{{ old_src_dir }}"
     requirements: "{{ 'requirements/test.txt' if is_dev else 'requirements.txt'}}"
     virtualenv: "/usr/share/python/old"
     virtualenv_python: "python3.4"
@@ -350,7 +361,7 @@
   tags: "oldinsts"
 
 - name: "Copy ISO languages data"
-  command: "cp -r {{ old_src_dir }}/old/old/static/iso_639_3_languages_data {{ old_apps_dir }}/{{ item.old_inst_name }}/old/static/"
+  command: "cp -r {{ old_src_dir }}/old/static/iso_639_3_languages_data {{ old_apps_dir }}/{{ item.old_inst_name }}/old/static/"
   with_items: "{{ old_instances }}"
   tags: "oldinsts"
 
