@@ -89,7 +89,7 @@
   tags: "oldsrc-osdep,foma"
 
 - set_fact:
-    foma_installed: "'foma 0.9.18alpha' in foma_version"
+    foma_installed: "{{ 'foma 0.9.18alpha' in foma_version.stdout }}"
   tags: "oldsrc-osdep,foma"
 
 - file:
@@ -140,9 +140,11 @@
   shell: "tgrep2 -h 2>&1 >/dev/null | grep version"
   register: "tgrep2_version"
   ignore_errors: "yes"
+  tags: "oldsrc-osdep,tgrep2"
 
 - set_fact:
-    tgrep2_installed: "'TGrep2 version 1.15' in tgrep2_version"
+    tgrep2_installed: "{{ 'TGrep2 version 1.15' in tgrep2_version.stdout }}"
+  tags: "oldsrc-osdep,tgrep2"
 
 - name: "Download DRUtils"
   get_url:
@@ -227,9 +229,11 @@
   shell: "estimate-ngram -h | grep 'MIT Language Modeling Toolkit'"
   register: "mitlm_version"
   ignore_errors: "yes"
+  tags: "oldsrc-osdep,mitlm"
 
 - set_fact:
-    mitlm_installed: "'MIT Language Modeling Toolkit 0.4.2' in mitlm_version"
+    mitlm_installed: "{{ 'MIT Language Modeling Toolkit 0.4.2' in mitlm_version.stdout }}"
+  tags: "oldsrc-osdep,mitlm"
 
 - name: "Checkout MITLM code"
   git:
