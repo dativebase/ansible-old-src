@@ -20,6 +20,7 @@ old_src_pkgdeps:
   - "libtiff5-dev"
   - "libjpeg8-dev"
   - "zlib1g-dev"
+  - "libmysqlcppconn-dev"
   - "libfreetype6-dev"
   - "liblcms2-dev"
   - "libreadline6"
