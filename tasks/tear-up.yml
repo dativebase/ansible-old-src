@@ -4,13 +4,49 @@
   apt:
     update_cache: "yes"
 
-- name: "Install necessary packages"
+
+- name: "Ensure pip is not installed from packages"
+  package:
+    name: "{{ item }}"
+    state: "absent"
+  with_items:
+    - "python-pip"
+    - "python2-pip"
+    - "python3-pip"
+
+
+- name: "Install necessary prerequisite packages"
   apt:
     pkg: "{{ item }}"
     state: "latest"
   with_items:
     - "python-pycurl"
     - "git"
+    - "python-setuptools"
+    - "python3-setuptools"
+    - "python-virtualenv"
+
+- name: "Download get-pip.py"
+  get_url:
+    url: "https://bootstrap.pypa.io/get-pip.py"
+    dest: "/root/get-pip.py"
+
+- name: "Install pip with get-pip.py"
+  command: "python3 get-pip.py"
+  args:
+    chdir: "/root/"
+
+- name: "Install virtualenv with pip"
+  pip:
+    name: "{{ item }}"
+    state: "latest"
+  with_items:
+    - "virtualenv"
+
+#- name: "install pip with easy_install"
+#  easy_install:
+#    name: "pip"
+#    state: "latest"
 
 - name: "Create user old"
   user:

@@ -304,21 +304,22 @@
 #   2. Python dependencies (pip packages)
 ###########################################################
 
-- name: "Create virtualenv for OLD, pip install requirements"
+- name: "Create virtualenv for OLD"
   pip:
-    chdir: "{{ old_src_dir }}"
-    requirements: "{{ 'requirements/test.txt' if is_dev else 'requirements.txt'}}"
+    name: "pip"
     virtualenv: "/usr/share/python/old"
     virtualenv_python: "python3.4"
-    extra_args: "-e \".[testing]\""
     state: "latest"
   tags: "oldsrc-pydep"
 
+- name: "Pip-install OLD requirements"
+  command: "/usr/share/python/old/bin/pip install -r requirements/test-oursql.txt -e \".[testing]\""
+  args:
+    chdir: "{{ old_src_dir }}"
+  tags: "oldsrc-pydep"
+
 - name: "Install oursql"
-  pip:
-    name: "https://launchpad.net/oursql/py3k/py3k-0.9.4/+download/oursql-0.9.4.zip"
-    virtualenv: "/usr/share/python/old"
-    virtualenv_python: "python3.4"
+  command: "/usr/share/python/old/bin/pip install https://launchpad.net/oursql/py3k/py3k-0.9.4/+download/oursql-0.9.4.zip"
   tags: "oldsrc-pydep"
 
 

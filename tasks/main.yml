@@ -14,6 +14,32 @@
   tags: # do not use "always" tag in role, to avoid issues when including other roles in a playbook
   - "oldsrc"
 
+- name: "Ensure pip is not installed from packages"
+  package:
+    name: "{{ item }}"
+    state: "absent"
+  with_items:
+    - "python-pip"
+    - "python2-pip"
+    - "python3-pip"
+
+- name: "Download get-pip.py"
+  get_url:
+    url: "https://bootstrap.pypa.io/get-pip.py"
+    dest: "/root/get-pip.py"
+
+- name: "Install pip with get-pip.py"
+  command: "python get-pip.py"
+  args:
+    chdir: "/root/"
+
+- name: "Install virtualenv with pip"
+  pip:
+    name: "{{ item }}"
+    state: "latest"
+  with_items:
+    - "virtualenv"
+
 
 #
 # Online Linguistic Database
